@@ -1,7 +1,52 @@
-from langchain.document_loaders import OnlinePDFLoader
+from os import getenv
+from langchain_community.document_loaders import PyPDFLoader
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 
-def load_data_from_web(url: str) -> list:
+from langchain_community.vectorstores import FAISS
+from langchain.chains.question_answering import load_qa_chain
+from langchain_community.llms.ollama import Ollama
+from langchain_community.embeddings import SentenceTransformerEmbeddings
+
+def init_knowledge_base(documents: list) -> FAISS:
+    """Initializes a knowledge base from the provided documents.
+
+    Args:
+        documents: A list of documents representing chunks of text from FAQ.pdf.
+
+    Returns:
+        A FAISS object containing the vectorized knowledge base and index for search.
+    """
+
+    # Create embeddings using the OpenAI model
+    embeddings = SentenceTransformerEmbeddings(model_name="all-MiniLM-L6-v2")
+
+    # Create a vectorized knowledge base using FAISS
+    knowledge_base = FAISS.from_documents(documents, embeddings)
+
+    return knowledge_base
+
+def get_answer_from_knowledge_base(query: str, knowledge_base: FAISS) -> str:
+    """Retrieves an answer to a query from the knowledge base.
+
+    Args:
+        query: The user's question.
+        knowledge_base: The FAISS object containing the knowledge base.
+
+    Returns:
+        The answer to the question found in the knowledge base.
+    """
+
+    llm = Ollama(model="llama3.1")
+    
+    # Load the question-answering chain using the OpenAI large language model
+    chain = load_qa_chain(llm, chain_type="stuff")
+
+    # Perform a similarity search in the knowledge base and generate an answer
+    answer = chain.run(input_documents=knowledge_base.similarity_search(query), question=query)
+
+    return answer
+
+def load_local_pdf(file_path: str) -> list:
     """
     Load data from web PDF
 
@@ -17,7 +62,7 @@ def load_data_from_web(url: str) -> list:
 
     """
     
-    loader = OnlinePDFLoader(url)
+    loader = PyPDFLoader(file_path)
     documents = loader.load()
 
     return documents
@@ -50,8 +95,16 @@ def split_documents(documents: list) -> list:
 
 
 def main():
-    doc = load_data_from_web("https://drive.google.com/file/d/1Iwf-CQNzBLtd1aEMs3-S5DOiPoGxi-cE/view?usp=sharing")
-    print(doc)
+    doc = load_local_pdf("data/Internal_FAQ.pdf")
+    # print(doc)
+    splited = split_documents(doc)
+    # print(splited)
+    
+    custom_knowledge_base = init_knowledge_base(splited)
+    # print(custom_knowledge_base)
+    
+    answer = get_answer_from_knowledge_base("What is CPC?", custom_knowledge_base)
+    print(answer)
     pass
 
 if __name__ == "__main__":
