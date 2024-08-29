@@ -14,7 +14,7 @@ def init_knowledge_base(documents: list) -> FAISS:
         model_name="all-MiniLM-L6-v2",
         model_kwargs={"device": "cpu"},
         encode_kwargs={"normalize_embeddings": False},
-        # tokenizer_kwargs={"cleanup tokenization spaces": True}
+        # tokenizer_kwargs={"cleanup_tokenization_spaces": True}
     )
     knowledge_base = FAISS.from_documents(documents, embeddings)
     return knowledge_base
@@ -43,11 +43,17 @@ def split_documents(documents: list) -> list:
     return documents
 
 def main():
-    doc = load_local_pdf("test_data/mykolanovosolov.pdf")
-    splited = split_documents(doc)
-    custom_knowledge_base = init_knowledge_base(splited)
-    answer = get_answer_from_knowledge_base("Who is Mykola?", custom_knowledge_base)
-    print(answer)
+    documents = load_local_pdf("test_data/mykolanovosolov.pdf")
+    documents = split_documents(documents)
+    knowledge_base = init_knowledge_base(documents)
+
+    while True:
+        query = input("\n\nAsk a question or type '/bye' to exit:\n")
+        if query.lower() == '/bye':
+            break
+
+        answer = get_answer_from_knowledge_base(query, knowledge_base)
+        print(f"\nAnswer: {answer}")
 
 if __name__ == "__main__":
     main()
