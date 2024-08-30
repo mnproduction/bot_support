@@ -1,9 +1,9 @@
 from langchain_community.document_loaders import PyPDFLoader
-from langchain.text_splitter import RecursiveCharacterTextSplitter
-from langchain_community.vectorstores import FAISS
-from langchain.chains.retrieval_qa.base import RetrievalQA
 from langchain_community.llms.ollama import Ollama
+from langchain_community.vectorstores import FAISS
 from langchain_huggingface import HuggingFaceEmbeddings
+from langchain.text_splitter import RecursiveCharacterTextSplitter
+from langchain.chains.retrieval_qa.base import RetrievalQA
 
 from langchain.memory import ConversationBufferMemory
 
@@ -81,7 +81,8 @@ def split_documents(documents: list) -> list:
     return documents
 
 def main():
-    documents = load_local_pdf("test_data/mykolanovosolov.pdf")
+    # documents = load_local_pdf("test_data/mykolanovosolov.pdf")
+    documents = load_local_pdf("data/Internal_FAQ.pdf")
     documents = split_documents(documents)
     knowledge_base = init_knowledge_base(documents)
 
